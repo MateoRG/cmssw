@@ -57,14 +57,19 @@ class SiStripMonitorDigi : public edm::EDAnalyzer {
 	
     MonitorElement* LayerNumberOfDigis;
     MonitorElement* LayerNumberOfDigisTrend;
+    MonitorElement* LayerNumberOfDigisTrendLS; 
     MonitorElement* LayerADCsHottestStrip;
     MonitorElement* LayerADCsHottestStripTrend;
+    MonitorElement* LayerADCsHottestStripTrendLS; 
     MonitorElement* LayerADCsCoolestStrip;
     MonitorElement* LayerADCsCoolestStripTrend;
+    MonitorElement* LayerADCsCoolestStripTrendLS; 
     MonitorElement* LayerDigiADCs;
     MonitorElement* LayerDigiADCsTrend;
+    MonitorElement* LayerDigiADCsTrendLS; 
     MonitorElement* LayerStripOccupancy;
     MonitorElement* LayerStripOccupancyTrend;
+    MonitorElement* LayerStripOccupancyTrendLS; 
     MonitorElement* LayerNumberOfDigisProfile;
     MonitorElement* LayerDigiADCProfile;
  	
@@ -74,6 +79,7 @@ class SiStripMonitorDigi : public edm::EDAnalyzer {
 
     int totNDigis;
     MonitorElement* SubDetTotDigiProf;
+    MonitorElement* SubDetTotDigiProfLS;
     MonitorElement* SubDetDigiApvProf;
     MonitorElement* SubDetDigiApvTH2;
 
@@ -83,6 +89,7 @@ class SiStripMonitorDigi : public edm::EDAnalyzer {
     MonitorElement* SubDetChargeMedianApvShotsTH1;
     MonitorElement* SubDetNStripsApvShotsTH1;
     MonitorElement* SubDetNApvShotsProf; 
+    MonitorElement* SubDetNApvShotsProfVsLS;
     MonitorElement* SubDetNApvShotsNApvTH1;
   };
 
@@ -140,7 +147,7 @@ class SiStripMonitorDigi : public edm::EDAnalyzer {
   std::vector<uint32_t> ModulesToBeExcluded_;
 
   //Global MEs to monitor APV Shots properties
-  MonitorElement *NApvShotsGlobal, *NApvShotsGlobalProf, *MedianChargeApvShotsGlobal, *NApvApvShotsGlobal, *StripMultiplicityApvShotsGlobal, *ShotsVsTimeApvShotsGlobal;
+  MonitorElement *NApvShotsGlobal, *NApvShotsGlobalProf, *MedianChargeApvShotsGlobal, *NApvApvShotsGlobal, *StripMultiplicityApvShotsGlobal, *ShotsVsTimeApvShotsGlobal, *ShotsVsLSApvShotsGlobal;
 
   TkHistoMap* tkmapdigi, *tkmapNApvshots, *tkmapNstripApvshot, *tkmapMedianChargeApvshots;  
 
@@ -176,12 +183,14 @@ class SiStripMonitorDigi : public edm::EDAnalyzer {
   bool subdetswitchnapvshotson;
   bool subdetswitchnstripsapvshotson;
   bool subdetswitchapvshotsonprof;
+  bool subdetswitchapvshotsonprofls; 
   bool subdetswitchchargemedianapvshotson;
   bool subdetswitchapvshotsApvon;
 
   bool globalswitchnapvshotson;
   bool globalswitchnstripsapvshotson;
   bool globalswitchapvshotsonprof;
+  bool globalswitchapvshotsonprofls;
   bool globalswitchchargemedianapvshotson;
   bool globalswitchapvshotsApvon;
 
@@ -208,6 +217,7 @@ class SiStripMonitorDigi : public edm::EDAnalyzer {
   bool shotschargehistomapon;
   
   bool createTrendMEs;
+  bool TrendsVsLS; 
 
   edm::InputTag historyProducer_;  
   edm::InputTag apvPhaseProducer_;
