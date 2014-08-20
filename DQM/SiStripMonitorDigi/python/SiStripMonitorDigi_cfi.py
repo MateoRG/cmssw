@@ -47,6 +47,16 @@ SiStripMonitorDigi = cms.EDAnalyzer("SiStripMonitorDigi",
         globalswitchon = cms.bool(False)
     ),
 
+    TProfNShotsVsLS = cms.PSet( 
+        Nbins = cms.int32(2400),
+        xmin = cms.double(0.0),
+        xmax = cms.double(150.0),
+        ymin = cms.double(0.0),
+        ymax = cms.double(0.0),
+        subdetswitchon = cms.bool(False),
+        globalswitchon = cms.bool(False)
+    ),
+
     TH1ApvNumApvShots = cms.PSet(
        Nbins = cms.int32(6),
        xmin = cms.double(0.5),
@@ -130,12 +140,22 @@ SiStripMonitorDigi = cms.EDAnalyzer("SiStripMonitorDigi",
         subdetswitchon = cms.bool(False)
     ),
 
+    TProfTotalNumberOfDigisVsLS = cms.PSet( 
+        Nbins = cms.int32(2400),
+        xmin = cms.double(0.0),
+        xmax = cms.double(150.0),
+        ymin = cms.double(0.0),
+        ymax = cms.double(0.0),
+        subdetswitchon = cms.bool(False)
+    ),
+
     TkHistoMap_On = cms.bool(True),
     TkHistoMapNApvShots_On = cms.bool(False),
     TkHistoMapNStripApvShots_On = cms.bool(False),
     TkHistoMapMedianChargeApvShots_On = cms.bool(False),
 
     CreateTrendMEs = cms.bool(False),
+    TrendsVsLS = cms.bool(True),
                                     
     Trending = cms.PSet(
         Nbins = cms.int32(600),
@@ -145,6 +165,13 @@ SiStripMonitorDigi = cms.EDAnalyzer("SiStripMonitorDigi",
         ymax = cms.double(10000.0)        
     ),
 
+    TrendingLS = cms.PSet(             
+        Nbins = cms.int32(2400),
+        xmin = cms.double(0.0),
+        xmax = cms.double(150),
+        ymin = cms.double(0.0),
+        ymax = cms.double(100000.0)
+    ),
 
     TProfDigiApvCycle = cms.PSet(
         Nbins = cms.int32(70),
@@ -165,11 +192,7 @@ SiStripMonitorDigi = cms.EDAnalyzer("SiStripMonitorDigi",
         yfactor = cms.double(0.2),
         subdetswitchon = cms.bool(False)
     ),
-
-    TProfTotalNumberOfDigisVsLS = cms.PSet(
-        subdetswitchon           = cms.bool(False)                
-    ),
-                                    
+                             
     TotalNumberOfDigisFailure = cms.PSet(
         Nbins = cms.int32(2500),
         ignoreFirstNLumisections = cms.int32(20),

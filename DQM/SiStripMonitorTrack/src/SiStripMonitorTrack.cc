@@ -30,6 +30,7 @@ SiStripMonitorTrack::SiStripMonitorTrack(const edm::ParameterSet& conf):
   Cluster_src_   = conf.getParameter<edm::InputTag>("Cluster_src");
   Mod_On_        = conf.getParameter<bool>("Mod_On");
   Trend_On_      = conf.getParameter<bool>("Trend_On");
+  TrendsVsLS     = conf.getParameter<bool>("TrendsVsLS");
   flag_ring      = conf.getParameter<bool>("RingFlag_On");
   TkHistoMap_On_ = conf.getParameter<bool>("TkHistoMap_On");
 
@@ -110,6 +111,7 @@ void SiStripMonitorTrack::analyze(const edm::Event& e, const edm::EventSetup& es
   vPSiStripCluster.clear();
 
   iOrbitSec = e.orbitNumber()/11223.0;
+  aLS = e.orbitNumber()/262144.0;
 
   // initialise # of clusters
   for (std::map<std::string, SubDetMEs>::iterator iSubDet = SubDetMEsMap.begin();
@@ -137,8 +139,14 @@ void SiStripMonitorTrack::analyze(const edm::Event& e, const edm::EventSetup& es
     }
     fillME(subdet_mes.nClustersOffTrack, subdet_mes.totNClustersOffTrack);
     if (Trend_On_) {
-      fillME(subdet_mes.nClustersTrendOnTrack,iOrbitSec,subdet_mes.totNClustersOnTrack);
-      fillME(subdet_mes.nClustersTrendOffTrack,iOrbitSec,subdet_mes.totNClustersOffTrack);
+      if (TrendsVsLS) {
+        fillME(subdet_mes.nClustersTrendOnTrackLS,aLS,subdet_mes.totNClustersOnTrack);
+        fillME(subdet_mes.nClustersTrendOffTrackLS,aLS,subdet_mes.totNClustersOffTrack);
+      }
+      else {
+        fillME(subdet_mes.nClustersTrendOnTrack,iOrbitSec,subdet_mes.totNClustersOnTrack);
+        fillME(subdet_mes.nClustersTrendOffTrack,iOrbitSec,subdet_mes.totNClustersOffTrack);
+      }
     }
   }
 }
@@ -307,15 +315,17 @@ void SiStripMonitorTrack::bookSubDetMEs(DQMStore::IBooker & ibooker , std::strin
   std::string completeName;
 
   SubDetMEs theSubDetMEs;
-  theSubDetMEs.totNClustersOnTrack    = 0;
-  theSubDetMEs.totNClustersOffTrack   = 0;
-  theSubDetMEs.nClustersOnTrack       = 0;
-  theSubDetMEs.nClustersTrendOnTrack  = 0;
-  theSubDetMEs.nClustersOffTrack      = 0;
-  theSubDetMEs.nClustersTrendOffTrack = 0;
-  theSubDetMEs.ClusterStoNCorrOnTrack = 0;
-  theSubDetMEs.ClusterChargeOffTrack  = 0;
-  theSubDetMEs.ClusterStoNOffTrack    = 0;
+  theSubDetMEs.totNClustersOnTrack      = 0;
+  theSubDetMEs.totNClustersOffTrack     = 0;
+  theSubDetMEs.nClustersOnTrack         = 0;
+  theSubDetMEs.nClustersTrendOnTrack    = 0;
+  theSubDetMEs.nClustersTrendOnTrackLS  = 0;
+  theSubDetMEs.nClustersOffTrack        = 0;
+  theSubDetMEs.nClustersTrendOffTrack   = 0;
+  theSubDetMEs.nClustersTrendOffTrackLS = 0;
+  theSubDetMEs.ClusterStoNCorrOnTrack   = 0;
+  theSubDetMEs.ClusterChargeOffTrack    = 0;
+  theSubDetMEs.ClusterStoNOffTrack      = 0;
 
   // TotalNumber of Cluster OnTrack
   completeName = "Summary_TotalNumberOfClusters_OnTrack" + subdet_tag;
@@ -341,10 +351,18 @@ void SiStripMonitorTrack::bookSubDetMEs(DQMStore::IBooker & ibooker , std::strin
 
   if(Trend_On_){
     // TotalNumber of Cluster
-    completeName = "Trend_TotalNumberOfClusters_OnTrack"  + subdet_tag;
-    theSubDetMEs.nClustersTrendOnTrack = bookMETrend(ibooker , "TH1nClustersOn", completeName.c_str());
-    completeName = "Trend_TotalNumberOfClusters_OffTrack"  + subdet_tag;
-    theSubDetMEs.nClustersTrendOffTrack = bookMETrend(ibooker , "TH1nClustersOff", completeName.c_str());
+    if (TrendsVsLS) {
+      completeName = "Trend_TotalNumberOfClusters_OnTrackVsLumisection_"  + subdet_tag;
+      theSubDetMEs.nClustersTrendOnTrackLS = bookMETrend( ibooker, "TH1nClustersOn", completeName.c_str());
+      completeName = "Trend_TotalNumberOfClusters_OffTrackVsLumisection"  + subdet_tag;
+      theSubDetMEs.nClustersTrendOffTrackLS = bookMETrend( ibooker, "TH1nClustersOff", completeName.c_str());
+    }
+    else {
+      completeName = "Trend_TotalNumberOfClusters_OnTrack"  + subdet_tag;
+      theSubDetMEs.nClustersTrendOnTrack = bookMETrend( ibooker, "TH1nClustersOn", completeName.c_str());
+      completeName = "Trend_TotalNumberOfClusters_OffTrack"  + subdet_tag;
+      theSubDetMEs.nClustersTrendOffTrack = bookMETrend( ibooker, "TH1nClustersOff", completeName.c_str());
+    }
   }
   //bookeeping
   SubDetMEsMap[name]=theSubDetMEs;
@@ -412,7 +430,10 @@ MonitorElement* SiStripMonitorTrack::bookMEProfile(DQMStore::IBooker & ibooker ,
 MonitorElement* SiStripMonitorTrack::bookMETrend(DQMStore::IBooker & ibooker , const char* ParameterSetLabel, const char* HistoName)
 {
   Parameters =  conf_.getParameter<edm::ParameterSet>(ParameterSetLabel);
-  edm::ParameterSet ParametersTrend =  conf_.getParameter<edm::ParameterSet>("Trending");
+  edm::ParameterSet ParametersTrend;
+  if (TrendsVsLS) ParametersTrend =  conf_.getParameter<edm::ParameterSet>("TrendingLS");
+  else ParametersTrend =  conf_.getParameter<edm::ParameterSet>("Trending");
+
   MonitorElement* me = ibooker.bookProfile(HistoName,HistoName,
 					ParametersTrend.getParameter<int32_t>("Nbins"),
 					0,
@@ -424,7 +445,8 @@ MonitorElement* SiStripMonitorTrack::bookMETrend(DQMStore::IBooker & ibooker , c
   if (me->kind() == MonitorElement::DQM_KIND_TPROFILE) me->getTH1()->SetBit(TH1::kCanRebin);
 
   if(!me) return me;
-  me->setAxisTitle("Event Time in Seconds",1);
+  if (TrendsVsLS) me->setAxisTitle("Lumisection",1); 
+  else me->setAxisTitle("Event Time in Seconds",1);
   return me;
 }
 

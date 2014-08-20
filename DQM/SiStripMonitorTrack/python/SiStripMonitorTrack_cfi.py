@@ -24,6 +24,7 @@ SiStripMonitorTrack = cms.EDAnalyzer(
     Mod_On        = cms.bool(False),
     OffHisto_On   = cms.bool(True),
     Trend_On      = cms.bool(False),
+    TrendsVsLS    = cms.bool(True),
     HistoFlag_On  = cms.bool(False),
     RingFlag_On   = cms.bool(False),
     TkHistoMap_On = cms.bool(True),   
@@ -106,6 +107,14 @@ SiStripMonitorTrack = cms.EDAnalyzer(
                          Steps      = cms.int32(5),
                          UpdateMode = cms.int32(1)
                          ),
+
+    TrendingLS = cms.PSet(             
+                         Nbins = cms.int32(2400),
+        		 xmin = cms.double(0.0),
+        		 xmax = cms.double(150),
+        		 ymin = cms.double(0.0),
+        		 ymax = cms.double(100000.0)
+    ),
 
     UseDCSFiltering = cms.bool(True)
     

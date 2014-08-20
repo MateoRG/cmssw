@@ -25,7 +25,7 @@
 #include "DataFormats/Common/interface/DetSetVector.h"
 #include "DataFormats/Common/interface/DetSetVectorNew.h"
 
-#include "DQMServices/Core/interface/DQMEDAnalyzer.h"
+#include "DQMServices/Core/interface/DQMEDAnalyzer.h" 
 
 class DQMStore;
 class SiStripDetCabling;
@@ -36,7 +36,7 @@ class APVCyclePhaseCollection;
 class SiStripDCSStatus;
 class GenericTriggerEventFlag;
 
-class SiStripMonitorCluster : public thread_unsafe::DQMEDAnalyzer {
+class SiStripMonitorCluster : public thread_unsafe::DQMEDAnalyzer { 
  public:
   explicit SiStripMonitorCluster(const edm::ParameterSet&);
   ~SiStripMonitorCluster();
@@ -63,14 +63,19 @@ class SiStripMonitorCluster : public thread_unsafe::DQMEDAnalyzer {
   struct LayerMEs{ // MEs for Layer Level
     MonitorElement* LayerClusterStoN = 0;
     MonitorElement* LayerClusterStoNTrend = 0;
+    MonitorElement* LayerClusterStoNTrendLS = 0;
     MonitorElement* LayerClusterCharge = 0;
     MonitorElement* LayerClusterChargeTrend = 0;
+    MonitorElement* LayerClusterChargeTrendLS = 0;
     MonitorElement* LayerClusterNoise = 0;
     MonitorElement* LayerClusterNoiseTrend = 0;
+    MonitorElement* LayerClusterNoiseTrendLS = 0;
     MonitorElement* LayerClusterWidth = 0;
     MonitorElement* LayerClusterWidthTrend = 0;
+    MonitorElement* LayerClusterWidthTrendLS = 0;
     MonitorElement* LayerLocalOccupancy = 0;
     MonitorElement* LayerLocalOccupancyTrend = 0;
+    MonitorElement* LayerLocalOccupancyTrendLS = 0;
     MonitorElement* LayerNumberOfClusterProfile = 0;
     MonitorElement* LayerClusterWidthProfile = 0;
 
@@ -80,6 +85,7 @@ class SiStripMonitorCluster : public thread_unsafe::DQMEDAnalyzer {
     int totNClusters = 0; 
     MonitorElement* SubDetTotClusterTH1 = 0;
     MonitorElement* SubDetTotClusterProf = 0;
+    MonitorElement* SubDetTotClusterProfLS = 0;
     MonitorElement* SubDetClusterApvProf = 0;
     MonitorElement* SubDetClusterApvTH2 = 0;
     MonitorElement* SubDetClusterDBxCycleProf = 0;
@@ -114,6 +120,7 @@ class SiStripMonitorCluster : public thread_unsafe::DQMEDAnalyzer {
   int FindRegion(int nstrip,int npixel);
   void fillModuleMEs(ModMEs& mod_mes, ClusterProperties& cluster);
   void fillLayerMEs(LayerMEs&, ClusterProperties& cluster, float timeinorbit);
+  void fillLayerMEsLS(LayerMEs&, ClusterProperties& cluster, float aLS);
 
   void ResetModuleMEs(uint32_t idet);
 
@@ -176,6 +183,7 @@ class SiStripMonitorCluster : public thread_unsafe::DQMEDAnalyzer {
   bool moduleswitchlocaloccupancy;
   bool moduleswitchnrclusterizedstrip;
   bool subdetswitchtotclusprofon;
+  bool subdetswitchtotclusprofonvsLS;
   bool subdetswitchapvcycleprofon;
   bool subdetswitchapvcycleth2on;
   bool subdetswitchapvcycledbxprof2on;
@@ -186,6 +194,7 @@ class SiStripMonitorCluster : public thread_unsafe::DQMEDAnalyzer {
   bool globalswitchMultiRegions;
   bool clustertkhistomapon;
   bool createTrendMEs;
+  bool TrendsVsLS;
 
   bool Mod_On_;
   bool ClusterHisto_;

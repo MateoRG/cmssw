@@ -29,8 +29,10 @@ SiStripMonitorDigi.TH1NStripsApvShots.subdetswitchon = True
 SiStripMonitorDigi.TH1NStripsApvShots.globalswitchon = True
 SiStripMonitorDigi.TH1ApvNumApvShots.subdetswitchon = True
 SiStripMonitorDigi.TH1ApvNumApvShots.globalswitchon = True
-SiStripMonitorDigi.TProfNShotsVsTime.subdetswitchon = True
-SiStripMonitorDigi.TProfNShotsVsTime.globalswitchon = True
+#SiStripMonitorDigi.TProfNShotsVsTime.subdetswitchon = True
+#SiStripMonitorDigi.TProfNShotsVsTime.globalswitchon = True
+SiStripMonitorDigi.TProfNShotsVsLS.subdetswitchon = True 
+SiStripMonitorDigi.TProfNShotsVsLS.globalswitchon = True 
 SiStripMonitorDigi.TProfGlobalNShots.globalswitchon = True
 
 # SiStripMonitorCluster ####
@@ -39,7 +41,8 @@ SiStripMonitorClusterBPTX = SiStripMonitorCluster.clone()
 SiStripMonitorClusterBPTX.Mod_On = False
 SiStripMonitorClusterBPTX.TH1TotalNumberOfClusters.subdetswitchon   = True
 SiStripMonitorClusterBPTX.TProfClustersApvCycle.subdetswitchon      = True
-SiStripMonitorClusterBPTX.TProfTotalNumberOfClusters.subdetswitchon = True
+#SiStripMonitorClusterBPTX.TProfTotalNumberOfClusters.subdetswitchon = True
+SiStripMonitorClusterBPTX.TProfTotalNumberOfClustersLS.subdetswitchon = True 
 SiStripMonitorClusterBPTX.TH2CStripVsCpixel.globalswitchon       = True
 SiStripMonitorClusterBPTX.TH1MultiplicityRegions.globalswitchon  = True
 SiStripMonitorClusterBPTX.TH1MainDiagonalPosition.globalswitchon = True
@@ -116,12 +119,12 @@ SiStripDetInfoFileReade = cms.Service("SiStripDetInfoFileReader")
 from  DPGAnalysis.SiStripTools.eventwithhistoryproducerfroml1abc_cfi import *
 
 # APV Phase Producer
-from DPGAnalysis.SiStripTools.apvcyclephaseproducerfroml1tsDB_cfi import *
+from DPGAnalysis.SiStripTools.apvcyclephaseproducerfroml1tsDB_cfi import * 
 
 # temporary patch in order to have BXlumi 
 from RecoLuminosity.LumiProducer.lumiProducer_cff import *
 
-# Sequence
+# Sequence 
 #removed modules using TkDetMap service
 #SiStripDQMTier0 = cms.Sequence(
 #    APVPhases*consecutiveHEs*siStripFEDCheck

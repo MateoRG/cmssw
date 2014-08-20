@@ -110,6 +110,7 @@ private:
   std::string histname; 
   LocalVector LV;
   float iOrbitSec;
+  float aLS;
 
   std::string topFolderName_;
   
@@ -143,8 +144,10 @@ private:
     int totNClustersOffTrack;
     MonitorElement* nClustersOnTrack;
     MonitorElement* nClustersTrendOnTrack;
+    MonitorElement* nClustersTrendOnTrackLS;
     MonitorElement* nClustersOffTrack;
     MonitorElement* nClustersTrendOffTrack;
+    MonitorElement* nClustersTrendOffTrackLS;
     MonitorElement* ClusterStoNCorrOnTrack;
     MonitorElement* ClusterChargeOffTrack;
     MonitorElement* ClusterStoNOffTrack;
@@ -166,6 +169,7 @@ private:
 
   bool Mod_On_;
   bool Trend_On_;
+  bool TrendsVsLS;
   bool OffHisto_On_;
   bool HistoFlag_On_;
   bool ring_flag;
