@@ -644,7 +644,7 @@ void SiStripMonitorCluster::analyze(const edm::Event& iEvent, const edm::EventSe
 
 	// Fill Layer Level MEs
 	if (found_layer_me) {
-          if(subdetswitchtotclusprofonvsLS) fillLayerMEsLS(layer_single, cluster_properties, aLS);
+          if(TrendsVsLS) fillLayerMEsLS(layer_single, cluster_properties, aLS);
           else fillLayerMEs(layer_single, cluster_properties, iOrbitSec); 
 	  if (layerswitchclusterwidthprofon)
 	    layer_single.LayerClusterWidthProfile->Fill(iDet, cluster_width);
