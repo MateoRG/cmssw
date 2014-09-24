@@ -106,8 +106,8 @@ SiStripMonitorDigi::SiStripMonitorDigi(const edm::ParameterSet& iConfig) :
   edm::ParameterSet ParametersTotDigiProf = conf_.getParameter<edm::ParameterSet>("TProfTotalNumberOfDigis");
   subdetswitchtotdigiprofon = ParametersTotDigiProf.getParameter<bool>("subdetswitchon");
 
-  //  edm::ParameterSet ParametersTotDigisProfVsLS = conf_.getParameter<edm::ParameterSet>("TProfTotalNumberOfDigisVsLS");
-  //  subdetswitchtotdigiproflson = ParametersTotDigisProfVsLS.getParameter<bool>("subdetswitchon");
+  edm::ParameterSet ParametersTotDigisProfVsLS = conf_.getParameter<edm::ParameterSet>("TProfTotalNumberOfDigisVsLS"); 
+  subdetswitchtotdigiproflson = ParametersTotDigisProfVsLS.getParameter<bool>("subdetswitchon");
 
   edm::ParameterSet ParametersTotDigiFailure = conf_.getParameter<edm::ParameterSet>("TotalNumberOfDigisFailure");
   subdetswitchtotdigifailureon = ParametersTotDigiFailure.getParameter<bool>("subdetswitchon");
@@ -133,6 +133,9 @@ SiStripMonitorDigi::SiStripMonitorDigi(const edm::ParameterSet& iConfig) :
   edm::ParameterSet ParametersNApvShotsProf = conf_.getParameter<edm::ParameterSet>("TProfNShotsVsTime");
   subdetswitchapvshotsonprof = ParametersNApvShotsProf.getParameter<bool>("subdetswitchon");
 
+  edm::ParameterSet ParametersNApvShotsProfVsLS = conf_.getParameter<edm::ParameterSet>("TProfNShotsVsLS");
+  subdetswitchapvshotsonprofls = ParametersNApvShotsProfVsLS.getParameter<bool>("subdetswitchon");
+
   //Global Histograms
 
   edm::ParameterSet ParametersGlobalNApvShots = conf_.getParameter<edm::ParameterSet>("TH1NApvShots");
@@ -153,6 +156,9 @@ SiStripMonitorDigi::SiStripMonitorDigi(const edm::ParameterSet& iConfig) :
   edm::ParameterSet ParametersGlobalNApvShotsTimeProf = conf_.getParameter<edm::ParameterSet>("TProfNShotsVsTime");
   globalswitchapvshotsonprof = ParametersGlobalNApvShotsTimeProf.getParameter<bool>("globalswitchon");
 
+  edm::ParameterSet ParametersGlobalNApvShotsLSProf = conf_.getParameter<edm::ParameterSet>("TProfNShotsVsLS");
+  globalswitchapvshotsonprofls = ParametersGlobalNApvShotsLSProf.getParameter<bool>("globalswitchon");
+
   //Digi and APV Shots Maps
 
   digitkhistomapon = conf_.getParameter<bool>("TkHistoMap_On"); 
@@ -162,6 +168,7 @@ SiStripMonitorDigi::SiStripMonitorDigi(const edm::ParameterSet& iConfig) :
   shotschargehistomapon = conf_.getParameter<bool>("TkHistoMapMedianChargeApvShots_On"); 
 
   createTrendMEs        = conf_.getParameter<bool>("CreateTrendMEs");
+  TrendsVsLS		= conf_.getParameter<bool>("TrendsVsLS");
   Mod_On_               = conf_.getParameter<bool>("Mod_On");
   //  xLumiProf             = conf_.getParameter<int>("xLumiProf");
   // Event History Producer
@@ -465,6 +472,23 @@ void SiStripMonitorDigi::createMEs(DQMStore::IBooker & ibooker , const edm::Even
       if (ShotsVsTimeApvShotsGlobal->kind() == MonitorElement::DQM_KIND_TPROFILE) ShotsVsTimeApvShotsGlobal->getTH1()->SetBit(TH1::kCanRebin);
     }
 
+    //cumulative number of APV shots Vs LS 
+    if (globalswitchapvshotsonprofls){
+      edm::ParameterSet Parameters =  conf_.getParameter<edm::ParameterSet>("TProfNShotsVsLS");
+      const char* HistoName = "NApv_Shots_vs_Lumisection";
+      ShotsVsLSApvShotsGlobal=ibooker.bookProfile(HistoName,HistoName,
+							   Parameters.getParameter<int32_t>("Nbins"),
+							   Parameters.getParameter<double>("xmin"),
+							   Parameters.getParameter<double>("xmax"),
+							   200, //that parameter should not be there !?
+							   Parameters.getParameter<double>("ymin"),
+							   Parameters.getParameter<double>("ymax"),
+							   "" );
+      ShotsVsLSApvShotsGlobal->setAxisTitle("Lumisection",1);
+      ShotsVsLSApvShotsGlobal->setAxisTitle("# Apv Shots",2);
+      if (ShotsVsLSApvShotsGlobal->kind() == MonitorElement::DQM_KIND_TPROFILE) ShotsVsLSApvShotsGlobal->getTH1()->SetBit(TH1::kCanRebin);
+    }
+
     //cumulative number of Strips in APV shots
     if (globalswitchnstripsapvshotson){
       edm::ParameterSet Parameters =  conf_.getParameter<edm::ParameterSet>("TH1NStripsApvShots");
@@ -578,6 +602,7 @@ void SiStripMonitorDigi::analyze(const edm::Event& iEvent, const edm::EventSetup
   eventNb++;
 
   float iOrbitSec      = iEvent.orbitNumber()/NORBITS_PER_SECOND;
+  float aLS	       = iEvent.orbitNumber()/262144.0;
 
   digi_detset_handles.clear();
 
@@ -691,7 +716,10 @@ void SiStripMonitorDigi::analyze(const edm::Event& iEvent, const edm::EventSetup
 	//Fill #ADCs for this digi at layer level
 	if(layerswitchdigiadcson) {
 	  fillME(local_layermes.LayerDigiADCs , this_adc);
-	  if (createTrendMEs) fillTrend(local_layermes.LayerDigiADCsTrend, this_adc, iOrbitSec);
+          if (createTrendMEs) {
+	    if (TrendsVsLS) fillTrend(local_layermes.LayerDigiADCsTrendLS, this_adc, aLS);
+	    else fillTrend(local_layermes.LayerDigiADCsTrend, this_adc, iOrbitSec);
+	  }
 	}
 	
 	if (layerswitchdigiadcprofon) 
@@ -707,7 +735,10 @@ void SiStripMonitorDigi::analyze(const edm::Event& iEvent, const edm::EventSetup
 	  (local_modmes.StripOccupancy)->Fill(det_occupancy);
 	if (layerswitchstripoccupancyon) {
 	  fillME(local_layermes.LayerStripOccupancy, det_occupancy);
-	  if (createTrendMEs) fillTrend(local_layermes.LayerStripOccupancyTrend, det_occupancy, iOrbitSec);
+	  if (createTrendMEs) { 
+	     if (TrendsVsLS) fillTrend(local_layermes.LayerStripOccupancyTrendLS, det_occupancy, aLS);
+	     else fillTrend(local_layermes.LayerStripOccupancyTrend, det_occupancy, iOrbitSec);
+	  }
 	}
       }
       
@@ -726,15 +757,24 @@ void SiStripMonitorDigi::analyze(const edm::Event& iEvent, const edm::EventSetup
     
     if(layerswitchnumdigison) {
       fillME(local_layermes.LayerNumberOfDigis,ndigi_layer);
-      if (createTrendMEs) fillTrend(local_layermes.LayerNumberOfDigisTrend, ndigi_layer, iOrbitSec);
+      if (createTrendMEs) {
+        if (TrendsVsLS) fillTrend(local_layermes.LayerNumberOfDigisTrendLS, ndigi_layer, aLS);
+        else fillTrend(local_layermes.LayerNumberOfDigisTrend, ndigi_layer, iOrbitSec);
+      }
     }
     if(layerswitchadchotteston) {
       fillME(local_layermes.LayerADCsHottestStrip,largest_adc_layer);
-      if (createTrendMEs) fillTrend(local_layermes.LayerADCsHottestStripTrend, largest_adc_layer, iOrbitSec);
+      if (createTrendMEs) {
+	if(TrendsVsLS) fillTrend(local_layermes.LayerADCsHottestStripTrendLS, largest_adc_layer, aLS); 
+        else fillTrend(local_layermes.LayerADCsHottestStripTrend, largest_adc_layer, iOrbitSec); 
+      }
     }
     if(layerswitchadccooleston) {
       fillME(local_layermes.LayerADCsCoolestStrip ,smallest_adc_layer);
-      if (createTrendMEs) fillTrend(local_layermes.LayerADCsCoolestStripTrend, smallest_adc_layer, iOrbitSec);
+      if (createTrendMEs) {
+	if(TrendsVsLS) fillTrend(local_layermes.LayerADCsCoolestStripTrendLS, smallest_adc_layer, aLS); 
+        else fillTrend(local_layermes.LayerADCsCoolestStripTrend, smallest_adc_layer, iOrbitSec); 
+      }
     }
 
     std::map<std::string, SubDetMEs>::iterator iSubdet  = SubDetMEsMap.find(subdet_label);
@@ -810,6 +850,7 @@ void SiStripMonitorDigi::analyze(const edm::Event& iEvent, const edm::EventSetup
 
       if (subdetswitchnapvshotson ) subdetmes.SubDetNApvShotsTH1->Fill(ShotsSize);// N shots
       if (subdetswitchapvshotsonprof) subdetmes.SubDetNApvShotsProf ->Fill(iOrbitSec,ShotsSize); //N shots vs time
+      if (subdetswitchapvshotsonprofls) subdetmes.SubDetNApvShotsProfVsLS ->Fill(aLS,ShotsSize); //N shots vs Lumisection 
 
       for (uint i=0; i< ShotsSize; ++i){ // Strip multiplicity, charge median and APV number distributions for APV shots
 	
@@ -825,10 +866,12 @@ void SiStripMonitorDigi::analyze(const edm::Event& iEvent, const edm::EventSetup
       }
       
       if (subdetswitchtotdigiprofon)subdetmes.SubDetTotDigiProf->Fill(iOrbitSec,subdetmes.totNDigis);
+      if (subdetswitchtotdigiproflson)subdetmes.SubDetTotDigiProfLS->Fill(aLS,subdetmes.totNDigis);
   }
 
   if (globalswitchnapvshotson) NApvShotsGlobal->Fill(TotalNShots);
   if (globalswitchapvshotsonprof) ShotsVsTimeApvShotsGlobal->Fill(iOrbitSec,TotalNShots);
+  if (globalswitchapvshotsonprofls) ShotsVsLSApvShotsGlobal->Fill(aLS,TotalNShots);
 
   // get EventHistory 
 
@@ -895,7 +938,10 @@ void SiStripMonitorDigi::ResetModuleMEs(uint32_t idet){
 //------------------------------------------------------------------------------------------
 MonitorElement* SiStripMonitorDigi::bookMETrend(DQMStore::IBooker & ibooker , const char* ParameterSetLabel, const char* HistoName )
 {
-  edm::ParameterSet ParametersTrend =  conf_.getParameter<edm::ParameterSet>("Trending");
+  edm::ParameterSet ParametersTrend;
+  if (TrendsVsLS) ParametersTrend =  conf_.getParameter<edm::ParameterSet>("TrendingLS"); 
+  else ParametersTrend =  conf_.getParameter<edm::ParameterSet>("Trending");
+
   MonitorElement* me = ibooker.bookProfile(HistoName,HistoName,
 					   ParametersTrend.getParameter<int32_t>("Nbins"),
 					   // 					      0,
@@ -908,7 +954,8 @@ MonitorElement* SiStripMonitorDigi::bookMETrend(DQMStore::IBooker & ibooker , co
 					   "" );
   if(!me) return me;
 
-  me->setAxisTitle("Event Time in Seconds",1);
+  if (TrendsVsLS) me->setAxisTitle("Lumisection",1); 
+  else me->setAxisTitle("Event Time in Seconds",1);
   if (me->kind() == MonitorElement::DQM_KIND_TPROFILE) me->getTH1()->SetBit(TH1::kCanRebin);
   return me;
 }
@@ -1002,49 +1049,69 @@ void SiStripMonitorDigi::createLayerMEs( DQMStore::IBooker & ibooker , std::stri
   if(iLayerME==LayerMEsMap.end()){
     SiStripHistoId hidmanager;
     LayerMEs layerMEs; 
-    layerMEs.LayerNumberOfDigis         = 0;
-    layerMEs.LayerNumberOfDigisTrend    = 0;
-    layerMEs.LayerADCsHottestStrip      = 0;
-    layerMEs.LayerADCsHottestStripTrend = 0;
-    layerMEs.LayerADCsCoolestStrip      = 0;
-    layerMEs.LayerADCsCoolestStripTrend = 0;
-    layerMEs.LayerDigiADCs              = 0;
-    layerMEs.LayerDigiADCsTrend         = 0;
-    layerMEs.LayerStripOccupancy        = 0;
-    layerMEs.LayerStripOccupancyTrend   = 0;
-    layerMEs.LayerNumberOfDigisProfile  = 0;
-    layerMEs.LayerDigiADCProfile        = 0;
+    layerMEs.LayerNumberOfDigis           = 0;
+    layerMEs.LayerNumberOfDigisTrend      = 0;
+    layerMEs.LayerNumberOfDigisTrendLS    = 0;
+    layerMEs.LayerADCsHottestStrip        = 0;
+    layerMEs.LayerADCsHottestStripTrend   = 0;
+    layerMEs.LayerADCsHottestStripTrendLS = 0;
+    layerMEs.LayerADCsCoolestStrip        = 0;
+    layerMEs.LayerADCsCoolestStripTrend   = 0;
+    layerMEs.LayerADCsCoolestStripTrendLS = 0;
+    layerMEs.LayerDigiADCs                = 0;
+    layerMEs.LayerDigiADCsTrend           = 0;
+    layerMEs.LayerDigiADCsTrendLS         = 0;
+    layerMEs.LayerStripOccupancy          = 0;
+    layerMEs.LayerStripOccupancyTrend     = 0;
+    layerMEs.LayerStripOccupancyTrendLS   = 0;
+    layerMEs.LayerNumberOfDigisProfile    = 0;
+    layerMEs.LayerDigiADCProfile          = 0;
     
 
     //#Digis
     if(layerswitchnumdigison) {
       layerMEs.LayerNumberOfDigis=bookME1D( ibooker , "TH1NumberOfDigis", hidmanager.createHistoLayer("Summary_TotalNumberOfDigis","layer",label,"").c_str() );
-      if (createTrendMEs) layerMEs.LayerNumberOfDigisTrend=bookMETrend( ibooker , "TH1NumberOfDigis", hidmanager.createHistoLayer("Trend_NumberOfDigis","layer",label,"").c_str() );
+      if (createTrendMEs) {
+	if (TrendsVsLS) layerMEs.LayerNumberOfDigisTrendLS=bookMETrend( ibooker, "TH1NumberOfDigis", hidmanager.createHistoLayer("Trend_NumberOfDigisVsLumisection","layer",label,"").c_str()); 
+	else layerMEs.LayerNumberOfDigisTrend=bookMETrend( ibooker, "TH1NumberOfDigis", hidmanager.createHistoLayer("Trend_NumberOfDigis","layer",label,"").c_str());
+      }
     }
 
     //#ADCs for hottest strip
     if(layerswitchadchotteston) {
       layerMEs.LayerADCsHottestStrip=bookME1D( ibooker , "TH1ADCsHottestStrip", hidmanager.createHistoLayer("Summary_ADCsHottestStrip","layer",label,"").c_str() );
-      if (createTrendMEs) layerMEs.LayerADCsHottestStripTrend=bookMETrend( ibooker , "TH1ADCsHottestStrip", hidmanager.createHistoLayer("Trend_ADCsHottestStrip","layer",label,"").c_str() );
+      if (createTrendMEs) {
+        if (TrendsVsLS) layerMEs.LayerADCsHottestStripTrendLS=bookMETrend( ibooker, "TH1ADCsHottestStrip", hidmanager.createHistoLayer("Trend_ADCsHottestStripVsLumisection","layer",label,"").c_str()); 
+	else layerMEs.LayerADCsHottestStripTrend=bookMETrend( ibooker, "TH1ADCsHottestStrip", hidmanager.createHistoLayer("Trend_ADCsHottestStrip","layer",label,"").c_str()); 
+      }
     }
 
     //#ADCs for coolest strip
     if(layerswitchadccooleston) {
       layerMEs.LayerADCsCoolestStrip=bookME1D(ibooker , "TH1ADCsCoolestStrip", hidmanager.createHistoLayer("Summary_ADCsCoolestStrip","layer",label,"").c_str() );
-      if (createTrendMEs) layerMEs.LayerADCsCoolestStripTrend=bookMETrend( ibooker , "TH1ADCsCoolestStrip", hidmanager.createHistoLayer("Trend_ADCsCoolestStrip","layer",label,"").c_str() );
+      if (createTrendMEs) {
+	if (TrendsVsLS) layerMEs.LayerADCsCoolestStripTrendLS=bookMETrend( ibooker, "TH1ADCsCoolestStrip", hidmanager.createHistoLayer("Trend_ADCsCoolestStripVsLS","layer",label,"").c_str()); 
+        else layerMEs.LayerADCsCoolestStripTrend=bookMETrend( ibooker, "TH1ADCsCoolestStrip", hidmanager.createHistoLayer("Trend_ADCsCoolestStrip","layer",label,"").c_str());
+      }
     }
 
     //#ADCs for each digi
     if(layerswitchdigiadcson) {
       layerMEs.LayerDigiADCs=bookME1D( ibooker , "TH1DigiADCs", hidmanager.createHistoLayer("Summary_DigiADCs","layer",label,"").c_str() );
-      if (createTrendMEs) layerMEs.LayerDigiADCsTrend=bookMETrend( ibooker , "TH1DigiADCs", hidmanager.createHistoLayer("Trend_DigiADCs","layer",label,"").c_str() );
+      if (createTrendMEs) {
+	if (TrendsVsLS) layerMEs.LayerDigiADCsTrendLS=bookMETrend( ibooker, "TH1DigiADCs", hidmanager.createHistoLayer("Trend_DigiADCsVsLumisection","layer",label,"").c_str());
+	else layerMEs.LayerDigiADCsTrend=bookMETrend( ibooker, "TH1DigiADCs", hidmanager.createHistoLayer("Trend_DigiADCs","layer",label,"").c_str());
+      }     
+
     }
 
     //Strip Occupancy
     if(layerswitchstripoccupancyon) {
       layerMEs.LayerStripOccupancy=bookME1D( ibooker , "TH1StripOccupancy", hidmanager.createHistoLayer("Summary_StripOccupancy","layer",label,"").c_str() );
-      if (createTrendMEs) layerMEs.LayerStripOccupancyTrend=bookMETrend( ibooker , "TH1StripOccupancy", hidmanager.createHistoLayer("Trend_StripOccupancy","layer",label,"").c_str() );
-      
+      if (createTrendMEs) {
+	if (TrendsVsLS) layerMEs.LayerStripOccupancyTrendLS=bookMETrend( ibooker, "TH1StripOccupancy", hidmanager.createHistoLayer("Trend_StripOccupancyVsLumisection","layer",label,"").c_str()); 
+	else layerMEs.LayerStripOccupancyTrend=bookMETrend( ibooker, "TH1StripOccupancy", hidmanager.createHistoLayer("Trend_StripOccupancy","layer",label,"").c_str());
+      }
     }
     // # of Digis 
     if(layerswitchnumdigisprofon) {
@@ -1067,16 +1134,18 @@ void SiStripMonitorDigi::createLayerMEs( DQMStore::IBooker & ibooker , std::stri
 void SiStripMonitorDigi::createSubDetMEs(DQMStore::IBooker & ibooker , std::string label ) {
 
   SubDetMEs subdetMEs; 
-  subdetMEs.totNDigis         = 0;
-  subdetMEs.SubDetTotDigiProf = 0;
-  subdetMEs.SubDetDigiApvProf = 0;
-  subdetMEs.SubDetDigiApvTH2  = 0;
+  subdetMEs.totNDigis           = 0;
+  subdetMEs.SubDetTotDigiProf   = 0;
+  subdetMEs.SubDetTotDigiProfLS = 0;
+  subdetMEs.SubDetDigiApvProf   = 0;
+  subdetMEs.SubDetDigiApvTH2    = 0;
 
   subdetMEs.SubDetApvShots.clear();
   subdetMEs.SubDetNApvShotsTH1            = 0;
   subdetMEs.SubDetChargeMedianApvShotsTH1 = 0;
   subdetMEs.SubDetNStripsApvShotsTH1      = 0;
   subdetMEs.SubDetNApvShotsProf           = 0;
+  subdetMEs.SubDetNApvShotsProfVsLS       = 0;
 
   std::string HistoName;
   
@@ -1096,6 +1165,22 @@ void SiStripMonitorDigi::createSubDetMEs(DQMStore::IBooker & ibooker , std::stri
     if (subdetMEs.SubDetTotDigiProf->kind() == MonitorElement::DQM_KIND_TPROFILE) subdetMEs.SubDetTotDigiProf->getTH1()->SetBit(TH1::kCanRebin);
   }
   
+  // Total Number of Digi - Profile LS 
+  if(subdetswitchtotdigiproflson){
+    edm::ParameterSet Parameters =  conf_.getParameter<edm::ParameterSet>("TProfTotalNumberOfDigisVsLS");
+    HistoName = "TotalNumberOfDigiProfileVsLumisection__" + label;
+    subdetMEs.SubDetTotDigiProfLS=ibooker.bookProfile(HistoName,HistoName,
+						       Parameters.getParameter<int32_t>("Nbins"),
+						       Parameters.getParameter<double>("xmin"),
+						       Parameters.getParameter<double>("xmax"),
+						       100, //that parameter should not be there !?
+						       Parameters.getParameter<double>("ymin"),
+						       Parameters.getParameter<double>("ymax"),
+						       "" );
+    subdetMEs.SubDetTotDigiProfLS->setAxisTitle("Lumisection",1);
+    if (subdetMEs.SubDetTotDigiProfLS->kind() == MonitorElement::DQM_KIND_TPROFILE) subdetMEs.SubDetTotDigiProfLS->getTH1()->SetBit(TH1::kCanRebin);
+  }
+
   // Number of Digi vs Bx - Profile
   if(subdetswitchapvcycleprofon){
     edm::ParameterSet Parameters =  conf_.getParameter<edm::ParameterSet>("TProfDigiApvCycle");
@@ -1203,10 +1288,22 @@ void SiStripMonitorDigi::createSubDetMEs(DQMStore::IBooker & ibooker , std::stri
   }
 
 
-
-
-
-
+//APV Shots number Vs Lumisection 
+  if(subdetswitchapvshotsonprofls){
+    edm::ParameterSet Parameters =  conf_.getParameter<edm::ParameterSet>("TProfNShotsVsLS");
+    HistoName = "NApv_Shots_vs_Lumisection_" + label;
+    subdetMEs.SubDetNApvShotsProfVsLS=ibooker.bookProfile(HistoName,HistoName,
+						       Parameters.getParameter<int32_t>("Nbins"),
+						       Parameters.getParameter<double>("xmin"),
+						       Parameters.getParameter<double>("xmax"),
+						       200, //that parameter should not be there !?
+						       Parameters.getParameter<double>("ymin"),
+						       Parameters.getParameter<double>("ymax"),
+						       "" );
+    subdetMEs.SubDetNApvShotsProfVsLS->setAxisTitle("Lumisection",1);
+    subdetMEs.SubDetNApvShotsProfVsLS->setAxisTitle("# Apv Shots",2);
+    if (subdetMEs.SubDetNApvShotsProfVsLS->kind() == MonitorElement::DQM_KIND_TPROFILE) subdetMEs.SubDetNApvShotsProfVsLS->getTH1()->SetBit(TH1::kCanRebin);
+  }
 
   SubDetMEsMap[label]=subdetMEs;
 }
